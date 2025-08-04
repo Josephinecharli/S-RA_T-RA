@@ -38,6 +38,14 @@ def _pgd(args, predictor, image, input_points, input_label, device, ε, apply_ss
     torch_image = torch.as_tensor(input_image, dtype=torch.float32, device=device)
     ssa_image = torch_image
 
+    # [JOS comment]
+    # TODO Benjamin: create mask here
+    # mask = 
+    mask_t = torch.as_tensor(mask, dtype=torch.float32, device=device)
+    if mask_t.ndim == 2:
+        mask_t = mask_t.unsqueeze(2)
+    mask_t = mask_t.expand(-1, -1, 3) 
+
     # 255 scale
     batch_view = lambda tensor: tensor.view(1, *[1] * (torch_image.ndim - 1))
     neg_inputs = -torch_image
@@ -107,7 +115,14 @@ def _pgd(args, predictor, image, input_points, input_label, device, ε, apply_ss
                 torch.cuda.empty_cache()
             adv_loss = accumulated_loss / num_points
             δ_grad = -torch.autograd.grad(adv_loss, δ, only_inputs=True, retain_graph=False)[0]
-            δ.data.add_(batch_view(step_size) * δ_grad.sign()).clamp_(min=batch_view(-ε), max=batch_view(ε))
+
+            # [JOS comment] zero out gradients outside the mask
+            δ_grad = δ_grad * mask_t
+
+            δ.data.add_(batch_view(step_size) * δ_grad.sign())
+
+
+            δ.data = δ.data.clamp_(min=batch_view(-ε), max=batch_view(ε)) * mask_t
             δ.data.clamp_(min=neg_inputs, max=one_minus_inputs)
 
             delta = delta + δ
