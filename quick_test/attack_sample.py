@@ -8,6 +8,7 @@ sys.path.append(".")
 from segment_anything import sam_model_registry, SamPredictor
 sys.path.append("..")
 from SSAscripts.pgd_attack import pgd
+from PIL import Image
 import argparse
 import matplotlib.pyplot as plt
 
@@ -98,6 +99,7 @@ def main(args):
     adv_image_np = np.transpose(adv_image[0], (1,2,0)) # 690, 1024, 3
     adv_image_np = cv2.resize(adv_image_np, (image.shape[1], image.shape[0])).astype(np.uint8)
     assert adv_image_np.max()<=255
+    Image.fromarray(adv_image_np).save(args.orig_image.replace(".png", "_perturbed_" + args.sam_model + ".png"))
     # resize_back?
     # TO be verified
     plt.clf()
