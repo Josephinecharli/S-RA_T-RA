@@ -46,8 +46,10 @@ def _pgd(args, predictor, image, input_points, input_label, device, ε, apply_ss
     if os.path.exists("mask.png"):
         mask = Image.open("mask.png")
     else:
+        print("init birefnet")
         birefnet = Birefnet_HR()
         mask = birefnet.segment(Image.fromarray(image))['background_segmentation']
+        print("mask created")
     mask = predictor.transform.apply_image(np.array(mask))
     mask_t = torch.as_tensor(np.array(mask), dtype=torch.float32, device=device)
     if mask_t.ndim == 2:
