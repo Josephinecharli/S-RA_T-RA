@@ -12,6 +12,7 @@ import numpy as np
 
 # from parser import args
 from SSAscripts.ssa import image_transfer
+from segmenters import Birefnet_HR
 
 
 def pgd(args, predictor, image, input_points, input_label, device, ε, apply_ssa=False,
@@ -42,7 +43,11 @@ def _pgd(args, predictor, image, input_points, input_label, device, ε, apply_ss
 
     # [JOS comment]
     # TODO Benjamin: generate mask dynamically
-    mask = Image.open("mask.png")
+    if os.path.exists("mask.png"):
+        mask = Image.open("mask.png")
+    else:
+        birefnet = Birefnet_HR()
+        mask = birefnet.segment(Image.fromarray(image))['background_segmentation']
     mask = predictor.transform.apply_image(np.array(mask))
     mask_t = torch.as_tensor(np.array(mask), dtype=torch.float32, device=device)
     if mask_t.ndim == 2:
