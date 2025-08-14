@@ -12,7 +12,7 @@ import numpy as np
 
 # from parser import args
 from SSAscripts.ssa import image_transfer
-from segmenters import Birefnet_HR
+from segmenters import Birefnet_HR, Segformer_B2_Clothes
 
 
 def pgd(args, predictor, image, input_points, input_label, device, ε, apply_ssa=False,
@@ -46,9 +46,17 @@ def _pgd(args, predictor, image, input_points, input_label, device, ε, apply_ss
     if os.path.exists("mask.png"):
         mask = Image.open("mask.png")
     else:
-        print("init birefnet")
-        birefnet = Birefnet_HR()
-        mask = birefnet.segment(Image.fromarray(image))['background_segmentation']
+        if args.segmenter == "birefnethr":
+            print("init birefnet")
+            birefnet = Birefnet_HR()
+            mask = birefnet.segment(Image.fromarray(image))['background_segmentation']
+        elif args.segmenter == "segformer":
+            print("init segformer_b2_clothes")
+            segformer = Segformer_B2_Clothes()
+            mask = segformer.segment(Image.fromarray(image))['clothing_segmentation']
+        else:
+            mask = Image.new("L", Image.fromarray(image).size, (255))
+        mask.save("last_mask.png")
         print("mask created")
     mask = predictor.transform.apply_image(np.array(mask))
     mask_t = torch.as_tensor(np.array(mask), dtype=torch.float32, device=device)

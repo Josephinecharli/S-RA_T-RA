@@ -134,6 +134,8 @@ if __name__ == '__main__':
     parser.add_argument('--result_csv', type=str, default='SSAscripts/B_B_True_8.csv')
     parser.add_argument('--rho', type=float, default=0.1)
     parser.add_argument('--mi', type=int, default=-1)
+    parser.add_argument("--segmenter", type=str, default="birefnethr", help="model to use for creating segmentation mask",
+                        choices=["birefnethr", "segformer", "none"])
     args = parser.parse_args()
     print(args)
     ##################
